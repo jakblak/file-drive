@@ -7,7 +7,13 @@ export const createFile = mutation({
     orgId: v.string(),
   },
   async handler(ctx, args) {
-    // const identity = await ctx.auth.getUserIdentity();
+    const identity = await ctx.auth.getUserIdentity();
+    console.log(identity?.tokenIdentifier);
+  if (!identity) {
+    console.log('identity not found');
+    return null;
+  }
+    
     // if(!identity) { 
     //   throw new ConvexError('must be logged in')
     // }

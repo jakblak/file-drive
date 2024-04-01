@@ -4,6 +4,7 @@ import { SignedOut } from "@clerk/clerk-react";
 import { SignInButton, SignOutButton, SignedIn, useOrganization, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useConvexAuth } from "convex/react";
 
 export default function Home() {
   const organization = useOrganization();
@@ -12,7 +13,7 @@ export default function Home() {
   if (organization.isLoaded && user.isLoaded) {
     orgId = organization.organization?.id ?? user.user?.id;
   }
-
+  const { isLoading, isAuthenticated } = useConvexAuth();
   const createFile = useMutation(api.files.createFile);
   const files = useQuery(
     api.files.getFileByOrg, 
@@ -43,6 +44,7 @@ export default function Home() {
       }} >
         Click me
       </Button>
+      
     </main>
   );
 }
