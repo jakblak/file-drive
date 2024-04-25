@@ -10,6 +10,8 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().min(1).max(200),
@@ -19,8 +21,11 @@ const formSchema = z.object({
 });
 
 export default function Home() {
+  const { toast } = useToast();
   const organization = useOrganization();
   const user = useUser();
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+
   let orgId: string | undefined = undefined;
   if (organization.isLoaded && user.isLoaded) {
     orgId = organization.organization?.id ?? user.user?.id;
@@ -38,6 +43,41 @@ export default function Home() {
   const files = useQuery(
     api.files.getFileByOrg, 
     orgId ? {orgId}: "skip");
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+      console.log(values);
+      console.log(values.file);
+      if(!orgId) return;
+      const postUrl = await generateUploadUrl();
+
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": values.file[0].type },
+        body: values.file[0],
+      });
+      const { storageId } = await result.json();
+
+     try { 
+      await createFile({
+        name: values.title,
+        fileId: storageId,
+        orgId,
+      });
+      form.reset();
+      setIsFileDialogOpen(false);
+      toast({
+        variant: "success",
+        title: "File Uploaded",
+        description: "Now everyone can view your file",
+      });
+     } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Something went wrong",
+        description: "Your file could not be uploaded, try again later",
+      });
+     }
+    }
 
   return (
     <main className="container mx-auto p-12">
@@ -94,11 +134,10 @@ export default function Home() {
               <Button
                 type="submit"
                 disabled={form.formState.isSubmitting}
-                className="flex gap-1"
-              >
-                {/* {form.formState.isSubmitting && (
+                className="flex gap-1">
+                {form.formState.isSubmitting && (
                   <Loader2 className="h-4 w-4 animate-spin" />
-                )} */}
+                )}
                 Submit
               </Button>
             </form>
@@ -123,8 +162,4 @@ export default function Home() {
       
     </main>
   );
-}
-
-function onSubmit(values: z.infer<typeof formSchema>) {
-  console.log(values);
 }
