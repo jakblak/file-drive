@@ -5,6 +5,7 @@ export default defineSchema({
   files: defineTable({ 
     name: v.string(), 
     orgId: v.optional(v.string()),
+    userId: v.optional(v.id("users")),
     fileId: v.id("_storage") }).index(
     "by_orgId", 
     ["orgId"]
